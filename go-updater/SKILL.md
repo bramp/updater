@@ -38,6 +38,9 @@ Also ensure `.github/dependabot.yml` is present to keep dependencies updated.
 
 ## Dependency Management
 
-- Use `go mod tidy` to prune unused dependencies.
-- Update `go.mod`'s `go` directive to the latest supported version.
+- **Upgrade Process**:
+    - Update `go.mod`'s `go` directive to the latest supported version.
+    - Run `go mod tidy` to prune unused dependencies.
+    - Run `go get -u ./...` to update all dependencies to latest minor/patch versions.
+    - Run `go mod tidy` again to clean up.
 - Prefer standard library over external dependencies where possible.

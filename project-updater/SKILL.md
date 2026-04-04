@@ -1,11 +1,11 @@
 ---
 name: project-updater
-description: Core philosophy and standards for updating open-source projects to modern, clean, and testable states.
+description: Core philosophy, standards, and workflow for updating open-source projects to modern, clean, and testable states.
 ---
 
 # Project Updater (Generic)
 
-This skill defines the foundational philosophy for updating any open-source project. Language-specific skills (e.g., `go-updater`, `flutter-updater`) should be used in conjunction with this one.
+This skill defines the foundational philosophy and incremental workflow for updating any open-source project. Language-specific skills (e.g., `go-updater`, `flutter-updater`, `java-updater`) inherit these standards and provide implementation details.
 
 ## Core Philosophy
 
@@ -16,37 +16,62 @@ This skill defines the foundational philosophy for updating any open-source proj
 5.  **Automate**: Every project must have GitHub Actions for CI (testing/analysis) and, where appropriate, CD (deployment/publishing).
 6.  **Incremental Progress**: Perform updates in small, logical, and stable steps. Commit frequently with clear messages.
 
+## Standard Incremental Workflow
+
+Updating a project should be done in small, stable steps. Commit after each step.
+
+1.  **Checkout & Baseline**:
+    - Clone the project and run existing tests/analysis to establish a baseline.
+    - Resolve any immediate issues in the current state.
+
+2.  **Modernize Infrastructure**:
+    - Add/update `Makefile` to match template naming conventions.
+    - Add/update GitHub workflows (e.g., `.github/workflows/test.yml`).
+    - Add/update `.github/dependabot.yml` for automated dependency updates.
+    - Add/update `.pre-commit-config.yaml` for formatting and basic checks.
+    - **Standardize README Header**: Ensure `README.md` uses the standard header format.
+    - **Commit**: "chore: adopt standard github workflows, makefile, and readme header"
+
+3.  **Bump Dependencies**:
+    - Update language version constraints (e.g., in `go.mod`, `pubspec.yaml`, `pom.xml`).
+    - Run language-specific upgrade commands (e.g., `dart pub upgrade`, `go mod tidy`, `mvn versions:display-dependency-updates`).
+    - Verify with `make analyze` and `make test`.
+    - **Commit**: "chore: update sdk and dependencies"
+
+4.  **Analysis Improvements**:
+    - Switch to stricter, modern linting rules (e.g., `very_good_analysis` for Dart, `staticcheck` for Go).
+    - Run `make fix` to apply automated changes.
+    - **Commit**: "chore: update analysis options and apply auto-fixes"
+
+5.  **Manual Code Clean-up**:
+    - Fix remaining warnings/errors (deprecated APIs, architectural issues).
+    - **Commit small batches**: "refactor: fix deprecated API usage", "style: format TODO comments"
+
+6.  **Publishing/Deployment Prep**:
+    - Update `CHANGELOG.md` with new entries.
+    - Perform a dry-run of the publishing process (if applicable).
+    - **Commit**: "chore: update changelog for vX.Y.Z"
+
 ## Standard Requirements for Every Project
 
 ### 1. Command Interface (Makefile)
-Every project must have a `Makefile` that provides a standard entry point for common tasks:
-- `make all`: The default target, running format, analyze, and test.
-- `make format`: Formats the source code.
-- `make analyze`: Performs static analysis/linting.
-- `make test`: Runs the full test suite.
-- `make test-ci`: The exact command used by CI.
-- `make fix`: Applies automated fixes.
-- `make upgrade`: Upgrades all dependencies to their latest compatible versions.
-- `make check-upgrade`: Checks for available dependency updates without applying them (e.g., `npm outdated`, `go list -u -m all`).
+Every project must have a `Makefile` with these standard targets:
+- `all`: The default target, running format, analyze, and test.
+- `format`: Formats the source code.
+- `analyze`: Performs static analysis/linting.
+- `test`: Runs the full test suite.
+- `test-ci`: The exact command used by CI.
+- `fix`: Applies automated fixes.
+- `upgrade`: Upgrades all dependencies to their latest compatible versions.
 
 ### 2. Continuous Integration (GitHub Actions)
-Every project must have a `.github/workflows/test.yml` that runs on every push and PR to `main`. It should:
-- Use official GitHub-provided actions where possible (e.g., `actions/checkout`, `actions/setup-node`, `actions/setup-go`) to ensure high trust and security.
-- Setup the correct environment (Go, Flutter, etc.).
-- Install dependencies.
-- Run `make format`, `make analyze`, and `make test-ci`.
+- `.github/workflows/test.yml`: CI validation (format, analyze, test).
+- `.github/dependabot.yml`: Automated dependency updates.
+- Optional: `.github/workflows/deploy.yml` (CD for deployment), `.github/workflows/publish.yml` (CD for publishing).
+- Use official GitHub-provided actions where possible.
 
-Every project must have a `.github/dependabot.yml` to automatically keep dependencies updated.
-
-Where appropriate, add:
-- `.github/workflows/deploy.yml`: CD for deployment (e.g., GitHub Pages). For static sites, use official actions (`upload-pages-artifact`, `deploy-pages`).
-- `.github/workflows/publish.yml`: CD for publishing to registries (e.g., NPM, pub.dev).
-
-### 3. Pre-commit Hooks
-Add a `.pre-commit-config.yaml` to the root to enforce formatting and basic checks before every commit.
-
-### 4. Documentation
-- **Standard README Header**: Every project must have a consistent header in its `README.md` following this structure:
+### 3. Documentation
+- **Standard README Header**:
   1.  **Project Title**: `# {PROJECT_NAME}`
   2.  **Description**: A brief, one-sentence summary.
   3.  **Author & Copyright**: `by Andrew Brampton ([bramp.net](https://bramp.net)) (c) {YEARS}`
@@ -55,11 +80,3 @@ Add a `.pre-commit-config.yaml` to the root to enforce formatting and basic chec
   6.  **Links**: Primary links (GitHub, Docs, etc.).
   7.  **Divider**: A horizontal rule `---` before the main content.
 - Maintain a clean `CHANGELOG.md`.
-
-## Workflow
-
-1.  **Baseline**: Run existing tests/analysis. If it doesn't pass, fix the "legacy" state first.
-2.  **Modernize Infrastructure**: Update `Makefile`, GitHub Actions, and `pre-commit` configs.
-3.  **Bump Dependencies**: Update language versions and libraries.
-4.  **Surgical Clean-up**: Fix lint warnings, deprecations, and architectural issues.
-5.  **Validate**: Ensure `make all` passes locally and in CI.
