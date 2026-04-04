@@ -1,0 +1,11 @@
+# Skills are tracked, everything else is ignored
+/*
+!/.gitignore
+!/TODO.md
+!/*.skill
+!/flutter-updater/
+!/go-updater/
+!/java-updater/
+!/js-updater/
+!/package-updater/
+!/project-updater/

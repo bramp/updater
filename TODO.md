@@ -1,0 +1,23 @@
+# Package Update TODO
+
+- [x] Write `SKILL.md` for package updates
+- [x] Adopt GitHub deploy/test workflows from `/Users/bramp/personal/flutter-template`
+- [ ] Update and publish packages:
+  - [x] **pmtiles** (https://github.com/bramp/pmtiles-dart)
+  - [x] **nine_patch** (https://github.com/bramp/nine_patch)
+  - [x] **binpack** (https://github.com/bramp/binpack)
+  - [x] **bithacks** (https://github.com/bramp/bithacks)
+  - [x] **nine_patcher** (https://github.com/bramp/nine_patch)
+  - [x] **svg_path_transform** (https://github.com/bramp/svg_path_transform)
+  - [ ] **flutter_gen_linter** (https://github.com/bramp/flutter_gen_linter)
+  - [ ] **js-sequence-diagrams** (https://github.com/bramp/js-sequence-diagrams)
+  - [ ] **ffmpeg-cli-wrapper** (https://github.com/bramp/ffmpeg-cli-wrapper)
+  - [ ] **prob.js** (https://github.com/bramp/prob.js)
+  - [ ] **antlr4-grammars** (https://github.com/bramp/antlr4-grammars)
+  - [ ] **unsafe** (https://github.com/bramp/unsafe)
+  - [ ] **libcec-daemon** (https://github.com/bramp/libcec-daemon)
+  - [x] **myip** (https://github.com/bramp/myip)
+  - [ ] **archivemount** (https://github.com/bramp/archivemount)
+  - [ ] **protoc-gen-php** (https://github.com/bramp/protoc-gen-php)
+  - [ ] **connected-component-labelling** (https://github.com/bramp/connected-component-labelling)
+  - [ ] **blog** (https://github.com/bramp/blog)

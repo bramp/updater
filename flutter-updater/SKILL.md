@@ -1,0 +1,40 @@
+---
+name: flutter-updater
+description: Specialized skill for updating Flutter/Dart packages, adhering to the standards defined in project-updater.
+---
+
+# Flutter Package Updater
+
+This skill specializes in updating Flutter/Dart packages, adhering to the standard philosophy in `project-updater/SKILL.md`.
+
+## Language Standards
+
+1.  **Workspaces**: Adopt Dart/Flutter workspaces (requires SDK ^3.5.0) for multi-package projects.
+2.  **Linting**: Prefer `package:very_good_analysis` for the strictest modern linting rules.
+3.  **Formatting**: Always use `dart format`.
+4.  **Pub.dev Standards**: Ensure `CHANGELOG.md` is updated and `publish_to` is commented out (to prevent accidental local publishing while still signaling intent).
+
+## Standard Makefile (Flutter)
+
+A `Makefile` for a Flutter project should implement the standard targets:
+- `all`: `format analyze test`
+- `format`: `dart format .`
+- `analyze`: `dart analyze`
+- `test`: `dart test` (or `flutter test`)
+- `test-ci`: `dart test --reporter=compact`
+- `fix`: `dart fix --apply`
+- `upgrade`: `dart pub upgrade --major-versions --tighten`
+
+## GitHub Actions (Flutter)
+
+The `test.yml` for Flutter should:
+- Use `subosito/flutter-action@v2`.
+- Cache the `.pub-cache`.
+- Run `make test-ci`.
+
+Also ensure `.github/dependabot.yml` is present to keep dependencies updated.
+
+## Dependency Management
+
+- Use `dart pub outdated` to identify major version upgrades.
+- Tighten SDK constraints to the latest stable release.
