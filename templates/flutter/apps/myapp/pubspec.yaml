@@ -1,0 +1,31 @@
+name: myapp
+description: "A new Flutter project."
+publish_to: none
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.11.0
+
+resolution: workspace
+
+dependencies:
+  cupertino_icons: ^1.0.8
+  flutter:
+    sdk: flutter
+  go_router: ^17.1.0
+  provider: ^6.1.5+1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  integration_test:
+    sdk: flutter
+  mocktail: ^1.0.4
+  very_good_analysis: ^10.2.0
+
+flutter:
+  uses-material-design: true
+
+  # assets:
+  #   - assets/images/
