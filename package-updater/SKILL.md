@@ -28,7 +28,8 @@ Updating a package should be done in small, logical, and stable steps. Commit af
     - Add `.github/dependabot.yml` to keep dependencies updated automatically.
     - Add `.pre-commit-config.yaml` to ensure consistent formatting and analysis before commits.
     - Update `Makefile` to match template naming conventions.
-    - **Commit**: "chore: adopt standard github workflows and makefile structure"
+    - **Standardize README Header**: Ensure `README.md` uses the standard header template with the correct title, author/link, Buy Me A Coffee link, description, badges, and links.
+    - **Commit**: "chore: adopt standard github workflows, makefile structure, and readme header"
 
 4. **Dependency Update**:
     - **Dart/Flutter**:
