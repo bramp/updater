@@ -1,0 +1,3 @@
+[submodule "flutter_template"]
+	path = flutter_template
+	url = https://github.com/bramp/flutter_template.git
