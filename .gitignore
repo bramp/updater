@@ -3,6 +3,9 @@
 !/.gitignore
 !/TODO.md
 !/*.skill
+!/README.md
+!/LICENSE
+!/AGENT.md
 !/flutter-updater/
 !/go-updater/
 !/java-updater/
