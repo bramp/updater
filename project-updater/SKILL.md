@@ -70,13 +70,8 @@ Every project must have a `Makefile` with these standard targets:
 - Optional: `.github/workflows/deploy.yml` (CD for deployment), `.github/workflows/publish.yml` (CD for publishing).
 - Use official GitHub-provided actions where possible.
 
+Refer to `templates/common/` for generic workflow templates and `templates/{language}/` for language-specific ones.
+
 ### 3. Documentation
-- **Standard README Header**:
-  1.  **Project Title**: `# {PROJECT_NAME}`
-  2.  **Description**: A brief, one-sentence summary.
-  3.  **Author & Copyright**: `by Andrew Brampton ([bramp.net](https://bramp.net)) (c) {YEARS}`
-  4.  **Buy Me A Coffee**: `[!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/bramp)`
-  5.  **Badges**: Relevant badges (CI status, coverage, version, etc.).
-  6.  **Links**: Primary links (GitHub, Docs, etc.).
-  7.  **Divider**: A horizontal rule `---` before the main content.
+- **Standard README Header**: Ensure `README.md` uses the standard header format (template: `templates/common/readme_header.md`).
 - Maintain a clean `CHANGELOG.md`.
