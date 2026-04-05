@@ -19,5 +19,6 @@ This repository contains a collection of modular AI Agent Skills focused on proj
 ## Structure
 
 - `*-updater/`: Skill definitions, prompts, and resources.
+- `issue-triage/`: Skill for triaging and responding to GitHub issues.
 - `package-updater/assets/`: Shared GitHub Action workflows and templates.
 - `java-updater.skill`: Standalone skill definition for Java.
