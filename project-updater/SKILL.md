@@ -78,6 +78,22 @@ Every project must have a `Makefile` with these standard targets:
 - `.github/dependabot.yml`: Automated dependency updates.
 - Use official GitHub-provided actions where possible.
 
-### 3. Documentation
+### 3. Release Workflow (GitHub Actions)
+For projects that publish releases, add `.github/workflows/release.yml`:
+- **Trigger**: On tag push (e.g., `v*` or `{name}-v*`) and optionally `workflow_dispatch`.
+- **Jobs**: Test → Publish → Post-publish (e.g., deploy docs).
+- **GitHub Release**: Use `softprops/action-gh-release@v2` with `generate_release_notes: true` for automatic changelog generation from commits/PRs.
+- **Javadoc / Docs**: If publishing API docs to GitHub Pages, use `actions/upload-pages-artifact@v4` + `actions/deploy-pages@v5`.
+
+### 4. Preferred GitHub Action Versions
+Keep actions up to date. Current preferred versions:
+- `actions/checkout@v6`
+- `actions/setup-java@v5` / `actions/setup-go@v5` / `subosito/flutter-action@v2`
+- `actions/cache@v4`
+- `softprops/action-gh-release@v2` (for creating GitHub Releases)
+- `actions/upload-pages-artifact@v4` + `actions/deploy-pages@v5` (for GitHub Pages)
+- `advanced-security/maven-dependency-submission-action@v5` (for Java dependency graphs)
+
+### 5. Documentation
 - **Standard README Header**: Mandatory use of `templates/common/readme_header.md` structure.
 - **CHANGELOG.md**: Mandatory tracking of changes.
