@@ -75,7 +75,17 @@ Every project must have a `Makefile` with these standard targets:
 
 ### 2. Continuous Integration (GitHub Actions)
 - `.github/workflows/test.yml`: CI validation (format, analyze, test).
-- `.github/dependabot.yml`: Automated dependency updates.
+- `.github/dependabot.yml`: Automated dependency updates. Every project must include the following `schedule` and `cooldown` configuration to ensure updates are ready for weekend review and have a safety buffer:
+  ```yaml
+  schedule:
+    interval: "weekly"
+    day: "friday"
+  cooldown:
+    default-days: 7      # The baseline safety net
+    semver-major-days: 30 # Wait for the community to find breaking changes
+    semver-minor-days: 14 # Balance between new features and stability
+    semver-patch-days: 3  # Short wait to ensure a patch isn't immediately yanked
+  ```
 - Use official GitHub-provided actions where possible.
 
 ### 3. Release Workflow (GitHub Actions)
