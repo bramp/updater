@@ -34,7 +34,14 @@ The `test.yml` for Go should:
 - Cache Go modules.
 - Run `make test-ci`.
 
-Also ensure `.github/dependabot.yml` is present to keep dependencies updated.
+Also ensure `.github/dependabot.yml` is present to keep dependencies updated, including the standard cooldown settings:
+```yaml
+    cooldown:
+      default-days: 7      # The baseline safety net
+      semver-major-days: 30 # Wait for the community to find breaking changes
+      semver-minor-days: 14 # Balance between new features and stability
+      semver-patch-days: 3  # Short wait to ensure a patch isn't immediately yanked
+```
 
 ## Dependency Management
 

@@ -59,4 +59,17 @@ Use high-trust, official GitHub actions where possible.
 - Set `registry-url: 'https://registry.npmjs.org'` in `actions/setup-node`.
 - Use `npm publish --provenance --access public`.
 
-Add `.github/dependabot.yml` to the root to keep dependencies and actions updated.
+### `deploy-gcp.yml` (GCP)
+- Use **Workload Identity Federation (WIF)** for secure authentication.
+- Require `permissions: id-token: write` and `contents: read`.
+- Use `google-github-actions/auth@v3` and `google-github-actions/deploy-cloud-functions@v3`.
+- See `gcp-updater/SKILL.md` for secret configuration requirements (`WIF_PROVIDER_NAME`, `GCP_SERVICE_ACCOUNT`, `GCP_PROJECT_ID`).
+
+Add `.github/dependabot.yml` to the root to keep dependencies and actions updated, including the standard cooldown settings:
+```yaml
+    cooldown:
+      default-days: 7      # The baseline safety net
+      semver-major-days: 30 # Wait for the community to find breaking changes
+      semver-minor-days: 14 # Balance between new features and stability
+      semver-patch-days: 3  # Short wait to ensure a patch isn't immediately yanked
+```

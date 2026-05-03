@@ -18,7 +18,14 @@ Updating a Java project should be done in small, logical, and stable steps. Comm
 2. **Adopt Standard Workflows & Structure**:
     - Add or update GitHub workflows (e.g., `.github/workflows/test.yml`).
     - Add `.github/workflows/release.yml` if the project publishes releases (see Release Workflow section).
-    - Add `.github/dependabot.yml` to keep dependencies updated automatically.
+    - Add `.github/dependabot.yml` to keep dependencies updated automatically, including the standard cooldown settings:
+```yaml
+    cooldown:
+      default-days: 7      # The baseline safety net
+      semver-major-days: 30 # Wait for the community to find breaking changes
+      semver-minor-days: 14 # Balance between new features and stability
+      semver-patch-days: 3  # Short wait to ensure a patch isn't immediately yanked
+```
     - Add `.pre-commit-config.yaml` if not present.
     - **Commit**: "chore: adopt standard github workflows"
 
