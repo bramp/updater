@@ -1,35 +1,34 @@
-# Flutter Template Makefile
+# Flutter Workspace Makefile
 
-.PHONY: all run format analyze test test-ci fix upgrade clean
+.PHONY: all run format format-check analyze test test-ci fix upgrade clean
 
 # Device to run on: chrome, macos, ios, android (default: chrome)
 DEVICE ?= chrome
-# Port for Flutter web dev server
-WEB_PORT ?= 3000
-
-# Shorthand for running commands in the app directory
 APP = cd apps/myapp
 
-all: format analyze test
+all: format-check analyze test
 
-## Run the app (use DEVICE=macos, DEVICE=ios, etc.)
 run:
 	$(APP) && flutter run -d $(DEVICE)
 
 format:
 	dart format .
 
+format-check:
+	dart format --output=none --set-exit-if-changed .
+
 analyze:
-	flutter analyze apps/
+	flutter analyze
 
 test:
 	$(APP) && flutter test
 
-test-ci:
+test-ci: format-check analyze
 	$(APP) && flutter test --reporter=compact
 
 fix:
 	dart fix --apply
+	dart format .
 
 upgrade:
 	dart pub upgrade --major-versions --tighten

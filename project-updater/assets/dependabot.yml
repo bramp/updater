@@ -1,0 +1,37 @@
+# Replace {ECOSYSTEM} with the project's package manager:
+# "uv" (or "pip"), "gomod", "npm", "maven", or "pub".
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "friday"
+    open-pull-requests-limit: 10
+    cooldown:
+      default-days: 7       # Baseline safety net before adopting new releases
+      semver-major-days: 30 # Wait for the community to surface breaking changes
+      semver-minor-days: 14 # Balance new features and stability
+      semver-patch-days: 3  # Short wait to avoid immediately yanked patches
+    groups:
+      actions-minor-patch:
+        update-types:
+          - "minor"
+          - "patch"
+
+  - package-ecosystem: "{ECOSYSTEM}"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "friday"
+    open-pull-requests-limit: 10
+    cooldown:
+      default-days: 7
+      semver-major-days: 30
+      semver-minor-days: 14
+      semver-patch-days: 3
+    groups:
+      dependencies-minor-patch:
+        update-types:
+          - "minor"
+          - "patch"

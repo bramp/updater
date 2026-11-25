@@ -1,17 +1,21 @@
-# Skills are tracked, everything else is ignored
+# Ignore cloned target repositories and scratch files in root (prefer cloning into work/)
 /*
+
+# Track repository root metadata, CI, and validation scripts
 !/.gitignore
-!/TODO.md
-!/*.skill
-!/README.md
+!/.github/
+!/AGENTS.md
 !/LICENSE
-!/AGENT.md
-!/flutter-updater/
-!/go-updater/
-!/java-updater/
-!/js-updater/
-!/python-updater/
-!/project-updater/
+!/README.md
+!/Makefile
+!/TODO.md
+!/scripts/
+
+# Automatically track all skills (each self-contained with SKILL.md and assets/)
+!/*-updater/
 !/issue-triage/
-!/templates/
-!/flutter_template/
+
+# Ignore OS and tool artifacts anywhere inside tracked directories
+.DS_Store
+__pycache__/
+*.pyc

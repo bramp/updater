@@ -1,75 +1,56 @@
 ---
 name: js-updater
-description: Specialized skill for updating JavaScript projects, adhering to the standard project-updater philosophy.
+description: Modernize JavaScript and TypeScript packages, Node.js tools, and web apps using ESM, strict TypeScript, ESLint flat config, Prettier, Vitest or node --test, publint, and npm OIDC Trusted Publishing. Use this skill when updating or scaffolding repositories with package.json, tsconfig.json, or .js/.ts files.
+license: BSD-3-Clause
 ---
 
-# JavaScript Package Updater
+# JavaScript & TypeScript Package Updater
 
-This skill specializes in updating JavaScript projects, adhering to the standards defined in `project-updater/SKILL.md`.
+This skill specializes in modernizing JavaScript and TypeScript projects, building on the core workflow and supply-chain standards in `project-updater`.
 
-## Language Standards
+## Bundled Templates
 
-1.  **Package Manager**: Use `npm` (default). **Deprecate and remove `bower`** if found. Always commit `package-lock.json` to ensure reproducible builds and CI caching.
-2.  **Branching**: Use `main` as the default branch. Rename `master` to `main` if it exists and update all references.
-3.  **Version**: Target all Active LTS and Current versions of Node.js. Update the CI matrix and `package.json` `engines` field accordingly.
-4.  **Modules**: Prefer ESM (`type: module` in `package.json`). For hybrid projects, configure ESLint to handle both `commonjs` and `module` source types.
-5.  **Linting**: Use `eslint` (v10+) with modern configurations. Use the `json` formatter if the default `stylish` formatter fails on specific Node versions.
-6.  **Formatting**: Use `prettier` for consistent code formatting. Add a `.prettierignore` to exclude `node_modules`, `dist`, `coverage`, and `build` directories.
-7.  **Testing**: Use modern testing frameworks like `qunit` (latest), `jest`, or `vitest`.
-8.  **Bundling/Minification**: Use `terser` instead of `uglify-js`.
+- [assets/Makefile](./assets/Makefile): Uniform `Makefile` separating non-mutating `npm ci` / `format-check` / `analyze` from local write commands.
+- [assets/tsconfig.json](./assets/tsconfig.json): Strict modern ESM TypeScript configuration (`NodeNext`, `noUncheckedIndexedAccess`, `verbatimModuleSyntax`).
+- [assets/workflows/test.yml](./assets/workflows/test.yml): SHA-pinned CI matrix across Node LTS versions (`20`, `22`, `24`).
+- [assets/workflows/publish.yml](./assets/workflows/publish.yml): Keyless npm Trusted Publishing (`--provenance`) with `publint` validation.
+- [assets/workflows/deploy.yml](./assets/workflows/deploy.yml): Keyless GitHub Pages static site deployment via `upload-pages-artifact` + `deploy-pages`.
 
-## Standard Makefile (JS)
+## Language & Tooling Standards
 
-A `Makefile` for a JavaScript project should implement:
-- `all`: `install format lint test`
-- `install`: `npm install`
-- `format`: `npm run format`
-- `lint`: `npm run lint`
-- `test`: `npm test`
-- `test-ci`: `npm test` (ensure it's non-interactive and suitable for CI)
-- `fix`: `npx eslint --fix . && npm run format`
-- `upgrade`: `npm update && npm install`
-- `check-upgrade`: `npm outdated || true`
+1. **Package Manager & Lockfiles**:
+   - Default to `npm` and always commit `package-lock.json` (use `npm ci` in CI and `make install`—never run `npm install` in `make all` or CI).
+   - Remove deprecated legacy managers/task runners (`bower`, `grunt`, `gulp`, `jshint`).
+   - Rename `master` to `main` if still using `master`.
+2. **Node.js LTS Support**:
+   - Target **Active and Maintenance LTS** releases (currently Node `20`, `22`, `24`—avoid pinning odd-numbered non-LTS releases once superseded). Keep `package.json` `"engines"` aligned with the CI matrix.
+3. **ESM & Package Exports**:
+   - Prefer native ESM (`"type": "module"` in `package.json`) with an explicit `"exports"` map (including `"types"` conditions when shipping TypeScript declarations).
+   - Validate published package metadata and export maps with **`npx publint`** (and **`npx @arethetypeswrong/cli --pack`** for TypeScript libraries).
+4. **TypeScript**:
+   - For TypeScript projects (or JS libraries benefiting from types), adopt strict compiler flags from [assets/tsconfig.json](./assets/tsconfig.json) (`strict: true`, `noUncheckedIndexedAccess: true`, `verbatimModuleSyntax: true`) and wire `"typecheck": "tsc --noEmit"` into `package.json` so `make analyze` runs it automatically.
+5. **Linting & Formatting**:
+   - **ESLint (v9/v10+ flat config)**: Use `eslint.config.js` (`@eslint/js` + `typescript-eslint`).
+   - **Prettier**: Enforce formatting via `prettier --check .` in CI (`make format-check`) and `prettier --write .` locally (`make format`). Exclude `node_modules/`, `dist/`, `build/`, and `coverage/`.
+6. **Testing & Bundling**:
+   - For small zero-dependency Node libraries, prefer Node's built-in **`node --test`** runner to avoid heavy devDependency trees.
+   - For larger apps, browser code, or TypeScript projects, prefer **`vitest`** (or latest `qunit` when preserving existing browser QUnit suites).
+   - Prefer `tsdown` / `tsup` / `esbuild` for bundling TypeScript libraries, and `terser` over legacy `uglify-js` when standalone minification is needed.
 
-## Releasing & Documentation
+## Standard Makefile Targets
 
-1.  **DEVELOPMENT.md**: Create a `DEVELOPMENT.md` to document the requirements, build, test, and automated release procedures.
-2.  **README.md**: Keep the `README.md` focused on usage and API. Move technical release details to `DEVELOPMENT.md`.
-3.  **Clean History**: When performing large modernizations, squash multiple incremental fix commits into a single logical "Modernize project" commit before releasing.
+See [assets/Makefile](./assets/Makefile):
+- `all`: `format-check analyze test`
+- `install`: `npm ci`
+- `format` / `format-check`: `npx prettier --write .` / `npx prettier --check .`
+- `analyze`: `npm run lint && npm run typecheck --if-present`
+- `test` / `test-ci`: `npm test` / `format-check analyze` + `npm test`
+- `fix`: `npx eslint --fix . && npx prettier --write .`
+- `upgrade` / `check-upgrade`: `npm update` / `npm outdated || true`
 
-## GitHub Actions (JS)
+## Documentation, CI/CD, & Dependabot
 
-Use high-trust, official GitHub actions where possible.
-
-### `test.yml`
-- Trigger on `push` and `pull_request` to `main`.
-- Include `workflow_call` to make it reusable.
-- Use `actions/checkout@v6` and `actions/setup-node@v6`.
-- Matrix test against Active LTS and Current Node versions (e.g., 20, 22, 24, 25).
-- Use `cache: 'npm'` (requires `package-lock.json`).
-- Run `npm ci` and `make test-ci`.
-
-### `deploy.yml` (Static Sites)
-- Use official `actions/upload-pages-artifact@v4` and `actions/deploy-pages@v5`.
-- Target the `github-pages` environment.
-
-### `publish.yml` (NPM)
-- Use **NPM Trusted Publishing (OIDC)** triggered by tags (e.g., `v*`).
-- Require `permissions: id-token: write` and `contents: read`.
-- Set `registry-url: 'https://registry.npmjs.org'` in `actions/setup-node`.
-- Use `npm publish --provenance --access public`.
-
-### `deploy-gcp.yml` (GCP)
-- Use **Workload Identity Federation (WIF)** for secure authentication.
-- Require `permissions: id-token: write` and `contents: read`.
-- Use `google-github-actions/auth@v3` and `google-github-actions/deploy-cloud-functions@v3`.
-- See `gcp-updater/SKILL.md` for secret configuration requirements (`WIF_PROVIDER_NAME`, `GCP_SERVICE_ACCOUNT`, `GCP_PROJECT_ID`).
-
-Add `.github/dependabot.yml` to the root to keep dependencies and actions updated, including the standard cooldown settings:
-```yaml
-    cooldown:
-      default-days: 7      # The baseline safety net
-      semver-major-days: 30 # Wait for the community to find breaking changes
-      semver-minor-days: 14 # Balance between new features and stability
-      semver-patch-days: 3  # Short wait to ensure a patch isn't immediately yanked
-```
+- **Documentation**: Keep `README.md` focused on installation, usage, and API; move contributor/release runbooks into `DEVELOPMENT.md`.
+- **Dependabot**: Configure `package-ecosystem: "npm"` alongside `"github-actions"`, using the standard Friday schedule, cooldowns, minor/patch `groups`, and `dependabot-auto-merge.yml` from `project-updater`.
+- **npm Trusted Publishing (`publish.yml`)**: Copy [assets/workflows/publish.yml](./assets/workflows/publish.yml). Configure Trusted Publishing on npmjs.com for the `npm` GitHub Environment (`id-token: write` + `npm publish --provenance --access public`, zero `NPM_TOKEN` secrets).
+- **GCP Deployments**: Pair with `gcp-updater` for Workload Identity Federation Cloud Run function deployments.

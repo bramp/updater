@@ -1,109 +1,100 @@
 ---
 name: project-updater
-description: Core philosophy, standards, and workflow for updating or creating open-source projects to modern, clean, and testable states.
+description: Core modernization workflow, Makefile contract, SHA-pinned GitHub Actions security policy, and Dependabot cooldown + auto-merge setup. Use this skill whenever scaffolding, auditing, or modernizing any open-source repository across any language.
+license: BSD-3-Clause
 ---
 
-# Project Updater (Generic)
+# Project Updater (Core Standards)
 
-This skill defines the foundational philosophy and incremental workflow for updating or creating any open-source project. Language-specific skills (e.g., `go-updater`, `flutter-updater`, `java-updater`) inherit these standards and provide implementation details.
+This skill defines the foundational engineering philosophy, supply-chain security rules, and incremental workflow applied to every open-source project. Pair it with the target project's language skill (`python-updater`, `go-updater`, `js-updater`, `java-updater`, `flutter-updater`) and `gcp-updater` when deploying to Google Cloud.
 
 ## Core Philosophy
 
-1.  **Modernize**: Always target the latest stable language versions and dependencies. Use modern language features and idioms.
-2.  **Clean & Maintainable**: Remove dead code, unused constants, and deprecated API usage. Follow the principle of "leave it better than you found it."
-3.  **Testable**: Ensure every project has a working test suite. If tests are missing or broken, fixing/adding them is a priority.
-4.  **Standardize**: Use a consistent project structure and command interface (e.g., a standard `Makefile`) across all projects.
-5.  **Automate**: Every project must have GitHub Actions for CI (testing/analysis) and, where appropriate, CD (deployment/publishing).
-6.  **Incremental Progress**: Perform work in small, logical, and stable steps. Commit frequently with clear messages.
+1. **Modernize**: Target current LTS/stable language runtimes and dependencies. Replace deprecated APIs and legacy tooling.
+2. **Clean & Maintainable**: Remove dead code, unused configuration, and legacy build wrappers.
+3. **Testable**: Every repository must have a meaningful, deterministic test suite—especially before enabling unattended Dependabot auto-merge.
+4. **Standardize**: Provide a uniform `Makefile` command interface across every repository, regardless of language.
+5. **Harden Supply Chain**: Pin GitHub Actions to full 40-character commit SHAs, enforce least-privilege workflow permissions, apply Dependabot release cooldowns, and publish via keyless OIDC.
+6. **Incremental Progress**: Work in small, reviewable steps with atomic commits.
+
+## Workspace Isolation
+
+Never modify skill assets in place when updating an external repository. Clone target repositories into an ignored scratch directory (such as `work/<repo-name>/`) or work directly inside the target repository's own checkout.
 
 ## Project Scaffolding (New Projects)
 
-If the project directory is empty or just initialized with git, follow these steps before the standard workflow:
-
-1.  **Initialize**: Run `git init` and create a basic directory structure if necessary.
-2.  **Scaffold from Templates**: Copy the relevant templates from `templates/{language}/` into the project root.
-3.  **Customize**: Rename placeholders (e.g., `{PROJECT_NAME}`) in the `Makefile`, `README.md`, and configuration files to match the new project.
-4.  **Baseline Commit**: "chore: initial project scaffolding from template"
+If starting an empty repository:
+1. Initialize git (`git init -b main`) and scaffold from the language skill's `assets/` directory plus shared files in [assets/](./assets).
+2. Replace placeholders (`{PROJECT_NAME}`, `{DESCRIPTION}`, `{ECOSYSTEM}`, `{YEARS}`) across configuration files and `README.md`.
+3. Commit baseline: `chore: initial project scaffolding from template`.
 
 ## Standard Incremental Workflow
 
-Work should be done in small, stable steps. Commit after each step.
+Perform updates in small, verified commits:
 
-1.  **Checkout & Baseline**:
-    - **Existing Projects**: Clone the project and run existing tests/analysis to establish a baseline. Resolve immediate issues.
-    - **New Projects**: Follow the **Project Scaffolding** steps above.
-
-2.  **Modernize Infrastructure**:
-    - Add/update `Makefile` from `templates/{language}/Makefile`.
-    - Add/update GitHub workflows (e.g., `.github/workflows/test.yml`) using `templates/{language}/test.yml` or `templates/common/`.
-    - Add/update `.github/dependabot.yml`.
-    - Add/update `.pre-commit-config.yaml` for formatting and basic checks.
-    - **Standardize README Header**: Ensure `README.md` uses the standard header format (template: `templates/common/readme_header.md`).
-    - **Commit**: "chore: adopt standard github workflows, makefile, and readme header"
-
-3.  **Dependencies & SDK**:
-    - Update language version constraints (e.g., `go.mod`, `pubspec.yaml`, `pom.xml`).
-    - Run language-specific upgrade/init commands (e.g., `dart pub upgrade`, `go mod tidy`, `mvn versions:display-dependency-updates`).
-    - Verify with `make analyze` and `make test`.
-    - **Commit**: "chore: update sdk and dependencies"
-
-4.  **Analysis & Fixes**:
-    - Enable strict, modern linting rules.
-    - Run `make fix` to apply automated changes.
-    - **Commit**: "chore: update analysis options and apply auto-fixes"
-
-5.  **Implementation / Clean-up**:
-    - **Existing**: Fix remaining warnings/errors (deprecated APIs, etc.).
-    - **New**: Implement the initial core logic and tests.
-    - **Commit small batches**: "refactor: fix deprecated API usage" or "feat: implement core logic"
-
-6.  **Release Preparation**:
-    - Ensure `CHANGELOG.md` is present and updated.
-    - **Commit**: "chore: prepare for v0.1.0" or "chore: update changelog"
+1. **Baseline**:
+   - Run the existing build and test suite to establish a green baseline before changing tooling.
+2. **Modernize Infrastructure**:
+   - Add/update `Makefile` using the language skill's `assets/Makefile`.
+   - Add/update `.github/workflows/test.yml` (and `release.yml` / `publish.yml` / `deploy.yml` as appropriate).
+   - Add/update `.github/dependabot.yml` from [assets/dependabot.yml](./assets/dependabot.yml) (replacing `{ECOSYSTEM}`) and `.github/workflows/dependabot-auto-merge.yml` from [assets/workflows/dependabot-auto-merge.yml](./assets/workflows/dependabot-auto-merge.yml).
+   - Configure repository auto-merge, branch protection ruleset ([assets/ruleset-main.json](./assets/ruleset-main.json)), and **Immutable Releases** on GitHub.
+   - Add/update `.pre-commit-config.yaml` from [assets/pre-commit-config.yaml](./assets/pre-commit-config.yaml) (compatible with **`prek`** and `pre-commit`).
+   - Standardize the `README.md` header using [assets/readme_header.md](./assets/readme_header.md).
+   - Validate workflows with `actionlint` and `zizmor` if installed.
+   - **Commit**: `chore: adopt hardened github workflows, dependabot auto-merge, and makefile`
+3. **Dependencies & Runtime**:
+   - Upgrade runtime constraints and dependencies (`make upgrade`), then verify with `make test-ci`.
+   - **Commit**: `chore: update runtime and dependencies`
+4. **Static Analysis & Formatting**:
+   - Enable strict modern linting/type-checking and apply automated fixes (`make fix`).
+   - **Commit**: `chore: enable strict analysis and apply formatting`
+5. **Code Modernization & Tests**:
+   - Resolve remaining warnings, deprecated APIs, and test coverage gaps in small batches.
+   - **Commit**: `refactor: modernize deprecated API usage`
+6. **Release Preparation**:
+   - Update `CHANGELOG.md` and verify `make test-ci` passes cleanly.
 
 ## Standard Requirements for Every Project
 
-### 1. Command Interface (Makefile)
-Every project must have a `Makefile` with these standard targets:
-- `all`: The default target, running format, analyze, and test.
-- `format`: Formats the source code.
-- `analyze`: Performs static analysis/linting.
-- `test`: Runs the full test suite.
-- `test-ci`: The exact command used by CI.
-- `fix`: Applies automated fixes.
-- `upgrade`: Upgrades all dependencies to their latest compatible versions.
+### 1. Uniform Command Interface (`Makefile`)
+Every project must expose these targets (separating non-mutating CI checks from local write commands):
+- `all`: Default target running `format-check`, `analyze`, and `test` (must not mutate lockfiles).
+- `install`: Installs locked dependencies reproducibly (e.g., `uv sync --locked`, `npm ci`).
+- `format`: Formats source code in place.
+- `format-check`: Verifies formatting without modifying files (used in CI).
+- `analyze`: Runs linters, static type checkers, and vulnerability scanners.
+- `test`: Runs unit/integration tests for local iteration.
+- `test-ci`: Exact non-interactive verification suite run in CI (`format-check` + `analyze` + verbose/race tests).
+- `fix`: Applies safe auto-fixes and formatting.
+- `upgrade`: Upgrades dependencies and refreshes lockfiles.
 
-### 2. Continuous Integration (GitHub Actions)
-- `.github/workflows/test.yml`: CI validation (format, analyze, test).
-- `.github/dependabot.yml`: Automated dependency updates. Every project must include the following `schedule` and `cooldown` configuration to ensure updates are ready for weekend review and have a safety buffer:
-  ```yaml
-  schedule:
-    interval: "weekly"
-    day: "friday"
-  cooldown:
-    default-days: 7      # The baseline safety net
-    semver-major-days: 30 # Wait for the community to find breaking changes
-    semver-minor-days: 14 # Balance between new features and stability
-    semver-patch-days: 3  # Short wait to ensure a patch isn't immediately yanked
-  ```
-- Use official GitHub-provided actions where possible.
+### 2. Hardened GitHub Actions Policy
+- **Full 40-char SHA Pinning**: Every `uses:` reference to an external action **must** be pinned to a full 40-character commit SHA with a version comment (e.g., `uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1`). Use `pinact run` when adding new actions; Dependabot updates both the SHA and comment automatically.
+- **Least-Privilege Permissions**: Declare `permissions: contents: read` at the top of every workflow. Grant elevated permissions (`id-token: write`, `pages: write`, `pull-requests: write`, `contents: write`) **only** on the specific job that requires them.
+- **Timeouts & Concurrency**: Set `timeout-minutes:` on every job (typically `15`–`20`m) and configure `concurrency:` to cancel superseded PR runs while never canceling in-progress deployments.
+- **No Untrusted Shell Interpolation**: Never interpolate `${{ github.event.* }}` directly inside `run:` scripts; pass values via `env:` variables.
+- **Official Keyless Publishing & Pages**: Use OIDC Trusted Publishing (PyPI, npm, pub.dev, GCP WIF) and official `actions/upload-pages-artifact` + `actions/deploy-pages` for GitHub Pages (never third-party PAT/branch-push actions).
 
-### 3. Release Workflow (GitHub Actions)
-For projects that publish releases, add `.github/workflows/release.yml`:
-- **Trigger**: On tag push (e.g., `v*` or `{name}-v*`) and optionally `workflow_dispatch`.
-- **Jobs**: Test → Publish → Post-publish (e.g., deploy docs).
-- **GitHub Release**: Use `softprops/action-gh-release@v2` with `generate_release_notes: true` for automatic changelog generation from commits/PRs.
-- **Javadoc / Docs**: If publishing API docs to GitHub Pages, use `actions/upload-pages-artifact@v4` + `actions/deploy-pages@v5`.
+### 3. Dependabot Cooldowns, Grouping, & Unattended Auto-Merge
+Every repository must include [assets/dependabot.yml](./assets/dependabot.yml) covering **both** `"github-actions"` and the project's package ecosystem (`"uv"`, `"gomod"`, `"npm"`, `"maven"`, or `"pub"`):
+- **Friday Weekly Schedule + Cooldowns**: `default-days: 7`, `semver-major-days: 30`, `semver-minor-days: 14`, `semver-patch-days: 3` (filters out acute supply-chain compromises and yanked releases).
+- **Grouped Minor/Patch PRs**: Batch `minor` and `patch` updates into single grouped PRs to avoid rebase churn.
+- **Scoped Unattended Auto-Merge** ([assets/workflows/dependabot-auto-merge.yml](./assets/workflows/dependabot-auto-merge.yml)):
+  - Automatically approves and enables `gh pr merge --auto --squash` **only** when:
+    1. `github.actor == 'dependabot[bot]'`
+    2. `update-type` is `semver-patch` or `semver-minor` (`semver-major` stays open for human/agent review)
+    3. `maintainer-changes != 'true'` (blocks auto-merge if package ownership changed)
+    4. The target branch enforces `required_status_checks` (the workflow verifies this via the GitHub Rules API and fails closed if missing, preventing immediate untested merges).
+  - **Repository Setup Commands** (run once when onboarding a repo with real test coverage):
+    ```bash
+    gh repo edit {OWNER}/{REPO} --enable-auto-merge --delete-branch-on-merge
+    # Replace {REQUIRED_CHECK_CONTEXT} in ruleset-main.json with the exact test job name (e.g. "test" or "JDK 25")
+    gh api repos/{OWNER}/{REPO}/rulesets --method POST --input ruleset-main.json
+    ```
+  - **Downstream Workflow Note**: Merges performed with `GITHUB_TOKEN` intentionally do **not** trigger `on: push` workflows. For libraries (released on tag push), this prevents unintended releases. For auto-deployed sites/Cloud Functions (`deploy.yml` on `main`), add a weekly `schedule:` trigger or trigger `workflow_dispatch` when you want dependency-only updates deployed immediately.
 
-### 4. Preferred GitHub Action Versions
-Keep actions up to date. Current preferred versions:
-- `actions/checkout@v6`
-- `actions/setup-java@v5` / `actions/setup-go@v5` / `subosito/flutter-action@v2`
-- `actions/cache@v4`
-- `softprops/action-gh-release@v2` (for creating GitHub Releases)
-- `actions/upload-pages-artifact@v4` + `actions/deploy-pages@v5` (for GitHub Pages)
-- `advanced-security/maven-dependency-submission-action@v5` (for Java dependency graphs)
-
-### 5. Documentation
-- **Standard README Header**: Mandatory use of `templates/common/readme_header.md` structure.
-- **CHANGELOG.md**: Mandatory tracking of changes.
+### 4. Releases, Provenance, & Documentation
+- Enable **Immutable Releases** in GitHub repository settings so published release tags and assets cannot be tampered with.
+- Use `softprops/action-gh-release` (SHA-pinned) with `generate_release_notes: true` and attach build provenance (`actions/attest-build-provenance` or native registry OIDC provenance) where applicable.
+- Maintain a standard `README.md` header ([assets/readme_header.md](./assets/readme_header.md)) and `CHANGELOG.md`.

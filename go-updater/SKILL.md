@@ -1,53 +1,53 @@
 ---
 name: go-updater
-description: Specialized skill for updating Go projects, following the standard project-updater philosophy.
+description: Modernize Go modules, libraries, and CLI applications using Go 1.24+ tool directives, staticcheck/golangci-lint, govulncheck, and race-enabled testing. Use this skill when updating or scaffolding Go repositories containing go.mod, Gopkg.toml, or .go source files.
+license: BSD-3-Clause
 ---
 
 # Go Package Updater
 
-This skill specializes in updating Go projects, adhering to the standards defined in `project-updater/SKILL.md`.
+This skill specializes in modernizing Go projects, building on the core workflow and supply-chain standards in `project-updater`.
 
-## Language Standards
+## Bundled Templates
 
-1.  **Modules**: Every project must use Go modules (`go.mod`).
-2.  **Version**: Target the latest stable Go version (currently `1.26` in this environment).
-3.  **Linting**: Use `staticcheck` and `go vet` as the primary analysis tools.
-4.  **Formatting**: Use `go fmt` and `goimports`.
-5.  **Complexity**: Monitor cyclomatic complexity using `gocyclo`. Aim for scores below 25.
+- [assets/Makefile](./assets/Makefile): Standard Go `Makefile` using pinned `go tool` executables, `govulncheck`, and `-race` tests.
+- [assets/workflows/test.yml](./assets/workflows/test.yml): SHA-pinned CI workflow reading the Go version directly from `go.mod`.
+- [assets/workflows/release.yml](./assets/workflows/release.yml): SHA-pinned tag release workflow.
 
-## Standard Makefile (Go)
+## Language & Tooling Standards
 
-A `Makefile` for a Go project should implement the standard targets as follows:
-- `all`: `format analyze test`
-- `format`: `go fmt ./... && goimports -w .`
-- `analyze`: `go vet ./... && staticcheck ./...`
+1. **Modules & Go Version**:
+   - Every project must use Go modules (`go.mod` + `go.sum`) targeting the latest stable Go release (`1.26+`).
+   - Prefer modern Go standard library packages (`slices`, `maps`, `cmp`, `log/slog`, `errors.Join`, range-over-int/iterators) over third-party helpers—run `go fix ./...` (and `modernize` if using `golangci-lint` v2) to adopt idioms automatically.
+2. **Pinned Dev Tools via `go.mod` `tool` Directive (Go 1.24+)**:
+   - Never run unpinned `go install ...@latest` in CI workflows, and remove legacy `tools.go` blank-import files.
+   - Pin tool dependencies directly in `go.mod`:
+     ```bash
+     go get -tool golang.org/x/tools/cmd/goimports@latest
+     go get -tool honnef.co/go/tools/cmd/staticcheck@latest
+     go get -tool golang.org/x/vuln/cmd/govulncheck@latest
+     ```
+   - Invoke pinned tools via `go tool <name>` (`go tool staticcheck ./...`). For larger repositories, **`golangci-lint` v2** (`golangci/golangci-lint-action`, SHA-pinned) can consolidate `govet`, `staticcheck`, `gocyclo`, `gofumpt`/`goimports`, and `modernize`.
+3. **Vulnerability Scanning & Race Detection**:
+   - Run **`go tool govulncheck ./...`** in `make analyze` to catch symbol-level vulnerabilities in dependencies and the Go standard library.
+   - Always run **`go test -race -shuffle=on -v ./...`** in `make test-ci` to surface data races and order-dependent tests.
+4. **Complexity**:
+   - Keep cyclomatic complexity reasonable (aim for `< 25` per function).
+
+## Standard Makefile Targets
+
+See [assets/Makefile](./assets/Makefile):
+- `all`: `format-check analyze test`
+- `format`: `gofmt -w . && go tool goimports -w .`
+- `format-check`: verifies `gofmt -l .` and `go tool goimports -l .` produce empty output
+- `analyze`: `go vet ./... && go tool staticcheck ./... && go tool govulncheck ./...`
 - `test`: `go test ./...`
-- `test-ci`: `go test -v ./...`
-- `fix`: `go fmt ./... && go fix ./...`
-- `upgrade`: `go mod tidy && go get -u ./... && go mod tidy`
+- `test-ci`: `format-check analyze` + `go test -race -shuffle=on -v ./...`
+- `fix`: `gofmt -w . && go tool goimports -w . && go fix ./...`
+- `upgrade`: `go mod tidy && go get -u ./... && go mod tidy` (note: `go get -u` upgrades minor/patch; inspect `semver-major` `/v2+` module path upgrades deliberately)
 
-## GitHub Actions (Go)
+## CI/CD & Dependabot
 
-The `test.yml` for Go should:
-- Use `actions/setup-go@v5`.
-- Install `staticcheck` and `goimports` if they are not pre-installed.
-- Cache Go modules.
-- Run `make test-ci`.
-
-Also ensure `.github/dependabot.yml` is present to keep dependencies updated, including the standard cooldown settings:
-```yaml
-    cooldown:
-      default-days: 7      # The baseline safety net
-      semver-major-days: 30 # Wait for the community to find breaking changes
-      semver-minor-days: 14 # Balance between new features and stability
-      semver-patch-days: 3  # Short wait to ensure a patch isn't immediately yanked
-```
-
-## Dependency Management
-
-- **Upgrade Process**:
-    - Update `go.mod`'s `go` directive to the latest supported version.
-    - Run `go mod tidy` to prune unused dependencies.
-    - Run `go get -u ./...` to update all dependencies to latest minor/patch versions.
-    - Run `go mod tidy` again to clean up.
-- Prefer standard library over external dependencies where possible.
+- **CI (`test.yml`)**: Copy [assets/workflows/test.yml](./assets/workflows/test.yml). Uses `actions/setup-go` with `go-version-file: "go.mod"` so `go.mod` remains the single source of truth (for libraries supporting multiple Go releases, add a `['oldstable', 'stable']` matrix).
+- **Dependabot**: Use `package-ecosystem: "gomod"` alongside `"github-actions"`, with the standard Friday schedule, cooldowns, minor/patch `groups`, and `dependabot-auto-merge.yml` from `project-updater`.
+- **Releases**: Copy [assets/workflows/release.yml](./assets/workflows/release.yml) (or add GoReleaser + `actions/attest-build-provenance` when shipping cross-platform CLI binaries).

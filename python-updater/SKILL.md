@@ -1,48 +1,55 @@
 ---
 name: python-updater
-description: Specialized skill for updating Python projects, following the standard project-updater philosophy.
+description: Modernize Python packages, CLI tools, and scripts to current standards using uv, pyproject.toml, ruff, static type checking, pytest, and PyPI OIDC Trusted Publishing. Use this skill when updating or scaffolding Python repositories containing pyproject.toml, setup.py, setup.cfg, Pipfile, or requirements.txt.
+license: BSD-3-Clause
 ---
 
 # Python Package Updater
 
-This skill specializes in updating Python projects, adhering to the standards defined in `project-updater/SKILL.md`.
+This skill specializes in modernizing Python projects, building on the core workflow and supply-chain standards in `project-updater`.
 
-## Language Standards
+## Bundled Templates
 
-1.  **Virtual Environments**: Every project must use a virtual environment, typically `.venv` in the project root.
-2.  **Version**: Target the latest stable Python version (currently `3.12` in this environment).
-3.  **Dependencies**: Use `requirements.txt` for managing project dependencies.
-4.  **Formatting**: Use `black` as the primary formatting tool.
-5.  **Linting**: Use `flake8` for static analysis.
-    -   **Line Length**: Set `--max-line-length 999` if using `black`, as `black` handles formatting while `flake8` focuses on logical issues.
-6.  **Testing**: Use `unittest` or `pytest`. Ensure tests are discoverable and can be run non-interactively.
+- [assets/Makefile](./assets/Makefile): Standard Python `Makefile` powered by `uv`, `ruff`, `mypy`, and `pytest`.
+- [assets/pyproject.toml](./assets/pyproject.toml): PEP 621 + PEP 735 `pyproject.toml` using `hatchling` and `src/` layout.
+- [assets/workflows/test.yml](./assets/workflows/test.yml): SHA-pinned CI matrix across Python `3.12`, `3.13`, and `3.14` using `astral-sh/setup-uv`.
+- [assets/workflows/release.yml](./assets/workflows/release.yml): Isolated `uv build` + keyless PyPI Trusted Publishing (`pypa/gh-action-pypi-publish`) with automatic PEP 740 Sigstore attestations.
 
-## Standard Makefile (Python)
+## Language & Tooling Standards
 
-A `Makefile` for a Python project should implement the standard targets as follows:
-- `all`: `format analyze test`
-- `format`: `black *.py` (and other relevant directories)
-- `analyze`: `flake8 --max-line-length 999 *.py`
-- `test`: `python3 -m unittest discover` or similar
-- `test-ci`: `python3 -m unittest discover -v`
-- `fix`: `black *.py`
-- `upgrade`: `pip install --upgrade -r requirements.txt && pip freeze > requirements.txt` (or similar)
+1. **Project & Dependency Management (`uv` + `pyproject.toml`)**:
+   - Migrate legacy `setup.py`, `setup.cfg`, `Pipfile`, or flat `requirements.txt` (`pip freeze`) to PEP 621 **`pyproject.toml`** + PEP 735 **`[dependency-groups]`** (`dev = [...]`).
+   - Commit **`uv.lock`** for reproducible environments and CI caching (`uv sync --locked`).
+   - Use **`src/<package_name>/`** layout with `hatchling` (or `uv_build`) for installable packages.
+   - For standalone single-file scripts that don't warrant a full package, declare dependencies inline via **PEP 723** (`# /// script`) and run with `uv run script.py`.
+2. **Python Versions**:
+   - Support active Python releases (**`3.12`–`3.14`** matrix for libraries; latest stable `3.14` for applications, or the latest GCP-supported runtime such as `python313` for Cloud Run functions).
+   - Set `requires-python = ">=3.12"` unless legacy callers require older support.
+3. **Formatting & Linting (`ruff`)**:
+   - Replace `black`, `flake8`, `isort`, and `pyupgrade` with **`ruff`**:
+     - Format: `uv run ruff format .` (`--check` in CI).
+     - Lint: `uv run ruff check .` with rule sets `["E", "F", "I", "B", "UP", "SIM", "RUF"]`.
+4. **Static Type Checking**:
+   - Require **`mypy --strict`** (or `basedpyright` / Astral's `ty`) in `make analyze`.
+   - Include an empty `py.typed` marker file inside published library packages (PEP 561).
+5. **Testing (`pytest`)**:
+   - Prefer **`pytest`** under `tests/` over legacy `unittest discover` runners (`pytest` runs existing `unittest.TestCase` classes seamlessly during migration).
 
-## GitHub Actions (Python)
+## Standard Makefile Targets
 
-The `test.yml` for Python should:
-- Use `actions/setup-python@v5`.
-- Cache `pip` dependencies using `cache: 'pip'`.
-- Use `requirements.txt` as the cache key.
-- Run `make test-ci`.
+See [assets/Makefile](./assets/Makefile):
+- `all`: `format-check analyze test`
+- `install`: `uv sync --locked`
+- `format` / `format-check`: `uv run ruff format .` / `uv run ruff format --check .`
+- `analyze`: `uv run ruff check . && uv run mypy src tests`
+- `test`: `uv run pytest`
+- `test-ci`: `format-check analyze` + `uv run pytest -v`
+- `fix`: `uv run ruff check --fix . && uv run ruff format .`
+- `upgrade`: `uv lock --upgrade && uv sync`
 
-Also ensure `.github/dependabot.yml` is present to keep dependencies updated.
+## CI/CD, Dependabot, & Publishing
 
-## Cloud Functions (GCP)
-
-For Python Cloud Functions:
-- Use `google-github-actions/deploy-cloud-functions@v3`.
-- Target `gen2` for modern functions.
-- Set the `runtime` to the latest supported Python version (e.g., `python312`).
-- Use **Workload Identity Federation (WIF)** for secure authentication.
-- See `gcp-updater/SKILL.md` for secret configuration requirements (`WIF_PROVIDER_NAME`, `GCP_SERVICE_ACCOUNT`, `GCP_PROJECT_ID`).
+- **CI (`test.yml`)**: Copy [assets/workflows/test.yml](./assets/workflows/test.yml). `astral-sh/setup-uv` caches `uv` automatically on GitHub-hosted runners.
+- **Dependabot**: Use `package-ecosystem: "uv"` (or `"pip"` only for legacy Cloud Functions runtime requirements) alongside `"github-actions"`, with the standard cooldown + minor/patch grouping + `dependabot-auto-merge.yml` from `project-updater`.
+- **PyPI Trusted Publishing (`release.yml`)**: Copy [assets/workflows/release.yml](./assets/workflows/release.yml). Configure the repository on PyPI as a Trusted Publisher targeting environment `pypi`—never store long-lived `PYPI_API_TOKEN` secrets.
+- **Cloud Run Functions (GCP)**: If deploying to Google Cloud, pair with `gcp-updater` (which provides WIF setup and `deploy-gcp.yml`). Note that Cloud Run functions expect either `pyproject.toml` or an exported `requirements.txt` (`uv export --no-dev --no-hashes -o requirements.txt` if required by an older buildpack).
