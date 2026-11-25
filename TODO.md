@@ -5,7 +5,7 @@
 - [ ] Update and publish packages:
 
 ## Top 20 by Popularity
-- [ ] **js-sequence-diagrams** (7831 stars) - https://github.com/bramp/js-sequence-diagrams
+- [x] **js-sequence-diagrams** (7831 stars) - https://github.com/bramp/js-sequence-diagrams
 - [x] **ffmpeg-cli-wrapper** (1901 stars) - https://github.com/bramp/ffmpeg-cli-wrapper
 - [x] **prob.js** (115 stars) - https://github.com/bramp/prob.js
 - [ ] **antlr4-grammars** (101 stars) - https://github.com/bramp/antlr4-grammars
@@ -38,5 +38,5 @@
 - [ ] **unsafe** - https://github.com/bramp/unsafe
 - [ ] **archivemount** - https://github.com/bramp/archivemount
 - [ ] **protoc-gen-php** - https://github.com/bramp/protoc-gen-php
-- [ ] **blog** (1 star) - https://github.com/bramp/blog
+- [x] **blog** (1 star) - https://github.com/bramp/blog
 
