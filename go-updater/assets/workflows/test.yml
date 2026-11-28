@@ -24,7 +24,10 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@d8cbb8045d7f43706b9177cceb36c1f91a6644d5 # v7.1.0
         with:
-          go-version-file: "go.mod"
+          # Use latest patched stable Go (not go-version-file: go.mod) so govulncheck
+          # doesn't fail on older stdlib patch releases when new CVEs are fixed.
+          go-version: "stable"
+          check-latest: true
           cache: true
 
       - name: Download modules

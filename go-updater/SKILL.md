@@ -11,13 +11,13 @@ This skill specializes in modernizing Go projects, building on the core workflow
 ## Bundled Templates
 
 - [assets/Makefile](./assets/Makefile): Standard Go `Makefile` using pinned `go tool` executables, `govulncheck`, and `-race` tests.
-- [assets/workflows/test.yml](./assets/workflows/test.yml): SHA-pinned CI workflow reading the Go version directly from `go.mod`.
+- [assets/workflows/test.yml](./assets/workflows/test.yml): SHA-pinned CI workflow running on the latest patched `stable` Go toolchain (`check-latest: true`).
 - [assets/workflows/release.yml](./assets/workflows/release.yml): SHA-pinned tag release workflow.
 
 ## Language & Tooling Standards
 
 1. **Modules & Go Version**:
-   - Every project must use Go modules (`go.mod` + `go.sum`) targeting the latest stable Go release (`1.26+`).
+   - Every project must use Go modules (`go.mod` + `go.sum`) targeting the latest stable Go release (`1.27+`).
    - Prefer modern Go standard library packages (`slices`, `maps`, `cmp`, `log/slog`, `errors.Join`, range-over-int/iterators) over third-party helpers—run `go fix ./...` (and `modernize` if using `golangci-lint` v2) to adopt idioms automatically.
 2. **Pinned Dev Tools via `go.mod` `tool` Directive (Go 1.24+)**:
    - Never run unpinned `go install ...@latest` in CI workflows, and remove legacy `tools.go` blank-import files.
@@ -48,6 +48,6 @@ See [assets/Makefile](./assets/Makefile):
 
 ## CI/CD & Dependabot
 
-- **CI (`test.yml`)**: Copy [assets/workflows/test.yml](./assets/workflows/test.yml). Uses `actions/setup-go` with `go-version-file: "go.mod"` so `go.mod` remains the single source of truth (for libraries supporting multiple Go releases, add a `['oldstable', 'stable']` matrix).
+- **CI (`test.yml`)**: Copy [assets/workflows/test.yml](./assets/workflows/test.yml). Uses `actions/setup-go` with `go-version: "stable"` and `check-latest: true` rather than `go-version-file: "go.mod"`, because `go-version-file` pins CI to the exact patch release in `go.mod` (causing `govulncheck` to fail as soon as newer stdlib security patches ship). When targeting a specific cloud runtime (e.g. App Engine `go127`), use `"1.27.x"` with `check-latest: true`; for libraries supporting multiple Go releases, add a `['oldstable', 'stable']` matrix.
 - **Dependabot**: Use `package-ecosystem: "gomod"` alongside `"github-actions"`, with the standard Friday schedule, cooldowns, minor/patch `groups`, and `dependabot-auto-merge.yml` from `project-updater`.
 - **Releases**: Copy [assets/workflows/release.yml](./assets/workflows/release.yml) (or add GoReleaser + `actions/attest-build-provenance` when shipping cross-platform CLI binaries).
